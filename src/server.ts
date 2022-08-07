@@ -6,7 +6,10 @@ import path from 'path'
 import handlebars from 'handlebars'
 import fs from 'fs'
 
-import Mail from './lib/mail';
+import nodemailer from 'nodemailer';
+import { resolve } from 'path';
+import { create } from 'express-handlebars';
+import nodemailerhbs from 'nodemailer-express-handlebars';
 
 import uploadConfig from './config/upload';
 
@@ -19,20 +22,45 @@ app.use('/files', express.static(uploadConfig.uploadFolder));
 
 app.get('/email', async (req: Request, res: Response) => {
     try {
-        await Mail.sendMail({
+        const mailer = nodemailer.createTransport({
+            host: 'smtp.umbler.com',
+            port: 587,
+            secure: false,
+            auth: {
+                user: 'naoresponda@msbtec.com.br',
+                pass: '',
+            }
+        });
+
+        const viewPath = resolve(__dirname, 'resources', 'views', 'emails');
+
+        mailer.use(
+            'compile',
+            nodemailerhbs({
+                viewEngine: create({
+                    defaultLayout: 'src/resources/views/emails/send',
+                    extname: '.hbs',
+                }),
+                viewPath,
+                extName: '.hbs',
+            })
+        )
+
+        mailer.sendMail({
+            from: 'Noreply <naoresponda@msbtec.com.br',
             to: `Matheus <math.cs.ceil@gmail.com>`,
             subject: 'Envio de email',
+            // @ts-ignore
             template: 'send',
             context: {
                 data: new Date().toISOString()
             },
-        });
-    } catch (error) {
-        console.log(error)
-    }
-   
+        })
 
-    res.send('Email enviado')
+        res.send('Email enviado')
+    } catch (error) {
+        res.send(error)
+    }    
 })
 
 app.get('/', async (req: Request, res: Response) => {
