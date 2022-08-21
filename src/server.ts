@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import multer from 'multer'
 
 import puppeteer from 'puppeteer'
 import path from 'path'
@@ -12,6 +13,16 @@ import { create } from 'express-handlebars';
 import nodemailerhbs from 'nodemailer-express-handlebars';
 
 import uploadConfig from './config/upload';
+
+const upload = multer({ storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadConfig.uploadFolder)
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + "-" + file.originalname
+        cb(null, file.fieldname + '-' + uniqueSuffix)
+    }
+}) })
 
 const app = express();
 
@@ -108,6 +119,14 @@ app.get('/', async (req: Request, res: Response) => {
 
     res.send({ url })
 })
+
+app.post("/upload", upload.single("file"), async (req: Request, res: Response) => {  
+    console.log(req.file, req.body)
+    res.json({
+        message: "Upload realizado com sucesso",
+        url: `http://localhost:3333/files/${req.file?.filename}`
+    });
+});
 
 app.listen(3333, () => {
   console.log('Server started on port 3333!');
