@@ -5,6 +5,9 @@
     "username": "postgres",
     "password": "password",
     "database": "teste",
+    "entities": [
+        "./dist/database/entities/*"
+    ],
     "cli": {
         "migrationsDir": "./src/database/migrations"
     }
